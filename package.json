@@ -1,6 +1,6 @@
 {
     "name": "amqp-broker",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
     "main": "dist/index.js",
@@ -23,7 +23,7 @@
         "url": "https://github.com/sprinteins/amqp-lib"
     },
     "files": [
-        "src/"
+        "dist"
     ],
     "dependencies": {
         "body-parser": "^1.18.3",
