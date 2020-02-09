@@ -1,6 +1,6 @@
 {
     "name": "amqp-broker",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
     "main": "dist/index.js",
@@ -17,7 +17,7 @@
         "test-ci": "./scripts/scripts-test-ci.sh",
         "test-debug": "./scripts/scripts-test-debug.sh",
         "debug": "./scripts/scripts-debug.sh",
-        "preinstall": "yarn tsc"
+        "postinstall": "yarn tsc"
     },
     "repository": {
         "type": "git",
