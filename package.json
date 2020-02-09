@@ -2,7 +2,7 @@
     "name": "amqp-broker",
     "version": "1.0.0",
     "description": "Wrapper for node.amqp library",
-    "license": "UNLICENSED",
+    "license": "MIT",
     "main": "src/index.js",
     "scripts": {
         "start": "./scripts/scripts-start.sh",
