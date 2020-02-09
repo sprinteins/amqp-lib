@@ -2,7 +2,7 @@ import * as AmqpLib from "amqplib/callback_api";
 import { Binding } from "./binding";
 import { Connection } from "./connection";
 import log from "./log";
-import { ExternalContent, Message, Properties } from "./message";
+import { ExternalContent, Message, MessageProperties } from "./message";
 import { Queue } from "./queue";
 
 export interface Options {
@@ -50,7 +50,7 @@ export class Exchange {
   public async publish(
     content: ExternalContent,
     routingKey = "",
-    options: Properties,
+    options: MessageProperties,
   ) {
     const newOptions = { ...options };
 

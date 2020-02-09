@@ -1,5 +1,6 @@
 import { Connection } from "./connection";
 import { Exchange } from "./exchange";
-import { Message, Properties } from "./message";
+import { Message, MessageProperties } from "./message";
+import { Queue } from "./queue";
 
-export { Connection, Message, Exchange, Properties };
+export { Connection, Message, MessageProperties, Exchange, Queue };

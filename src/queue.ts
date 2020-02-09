@@ -3,7 +3,7 @@ import { Binding } from "./binding";
 import { Connection } from "./connection";
 import { Exchange } from "./exchange";
 import log from "./log";
-import { ExternalContent, Message, Properties } from "./message";
+import { ExternalContent, Message, MessageProperties } from "./message";
 
 export interface Options {
   exclusive?: boolean;
@@ -52,7 +52,7 @@ const DIRECT_QUEUE = "amq.rabbitmq.reply-to";
 export class Queue {
   public static Serialize(
     content: ExternalContent,
-    options: Properties,
+    options: MessageProperties,
   ): Buffer {
     if (typeof content === "string") {
       return new Buffer(content);

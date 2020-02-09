@@ -10,7 +10,7 @@ enum MessageType {
 
 export type ExternalContent = Buffer | string | JSON | {};
 
-export interface Properties {
+export interface MessageProperties {
     contentType?: string;
     contentEncoding?: string;
     headers?: AmqpLib.MessagePropertyHeaders;
@@ -33,13 +33,13 @@ export interface Properties {
 
 export class Message {
     private content: Buffer;
-    private properties: Properties;
+    private properties: MessageProperties;
 
     private _fields?: AmqpLib.MessageFields;
     private _channel?: AmqpLib.Channel;
     private _message?: AmqpLib.Message;
 
-    constructor(content: ExternalContent, options: Properties) {
+    constructor(content: ExternalContent, options: MessageProperties) {
         this.properties = options;
         this.content = this.setBufferContent(content);
     }
@@ -52,7 +52,7 @@ export class Message {
         return content;
     }
 
-    public getProperties(): Properties {
+    public getProperties(): MessageProperties {
         return this.properties;
     }
     public setMessageChannel(channel: AmqpLib.Channel) {
