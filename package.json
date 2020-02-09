@@ -1,6 +1,6 @@
 {
     "name": "amqp-broker",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
     "main": "./lib/index.js",
