@@ -1,6 +1,10 @@
 /// <reference types="node" />
 import * as AmqpLib from "amqplib/callback_api";
 import { Client } from "./binding";
+declare enum MessageType {
+    EntityMessage = "entity",
+    ActionMessage = "event"
+}
 export declare type ExternalContent = Buffer | string | JSON | {};
 export interface Properties {
     contentType?: string;
@@ -13,7 +17,7 @@ export interface Properties {
     expiration?: string;
     messageId?: string;
     timestamp?: number;
-    type?: string;
+    type?: MessageType;
     userId?: string;
     appId?: string;
     clusterId?: string;
@@ -46,3 +50,4 @@ export declare class Message {
     private sendMessage;
     private setBufferContent;
 }
+export {};
