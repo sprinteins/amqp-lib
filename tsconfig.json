@@ -9,6 +9,8 @@
         "inlineSourceMap": true,
         "strict": true,
         "baseUrl": ".",
+        "noEmit": false,
+        "declaration": true,
         "paths": {
             "src/*": ["src/*"]
         }

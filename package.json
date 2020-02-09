@@ -1,9 +1,10 @@
 {
     "name": "amqp-broker",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
     "scripts": {
         "start": "./scripts/scripts-start.sh",
         "start-debug": "./scripts/scripts-start-debug.sh",
