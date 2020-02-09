@@ -1,0 +1,102 @@
+version: "3.6"
+networks:
+    amqp-lib-network:
+        external: true
+services:
+    amqp-lib:
+        build: .
+        image: "docker.sprinteins.com/libs/amqp"
+
+    amqp-lib-dev:
+        image: "node:9.11.2-alpine"
+        environment:
+            - RABBIT_URL=amqp://test:test@message-broker:5672/
+        ports:
+            - "3030:3000"
+        stdin_open: true
+        tty: true
+        networks:
+            - amqp-lib-network
+        volumes:
+            - .:/app
+        command: ["sh", "-c", "cd /app && yarn install && yarn test-watch"]
+
+    amqp-lib-run:
+        image: "node:9.11.2-alpine"
+        environment:
+            - RABBIT_URL=amqp://test:test@message-broker:5672/
+        ports:
+            - "3030:3000"
+        depends_on: 
+            - message-broker
+        stdin_open: true
+        tty: true
+        networks:
+            - amqp-lib-network
+        volumes:
+            - .:/app
+        command: ["sh", "-c", "cd /app && yarn install && yarn start-watch"]
+
+    amqp-lib-run-profiling:
+        image: "node:9.11.2-alpine"
+        environment:
+            - RABBIT_URL=amqp://test:test@message-broker:5672/
+        ports:
+            - "3030:3000"
+        depends_on: 
+            - message-broker
+        stdin_open: true
+        tty: true
+        stop_grace_period: 2m30s
+        volumes:
+            - .:/app
+        networks:
+            - amqp-lib-network
+        command: ["sh", "-c", "cd /app && yarn install && yarn start-profiling"]
+
+
+    amqp-lib-data-test:
+        image: "node:9.11.2-alpine"
+        environment:
+            - RABBIT_URL=amqp://test:test@message-broker:5672/
+        ports:
+            - "3030:3000"
+        depends_on: 
+            - message-broker
+        stdin_open: true
+        tty: true
+        volumes:
+            - .:/app
+        networks:
+            - amqp-lib-network
+        command: ["sh", "-c", "cd /app && yarn install && yarn watch-test"]
+
+    amqp-lib-test-ci:
+        image: "node:9.11.2-alpine"
+        environment:
+            - RABBIT_URL=amqp://test:test@message-broker:5672/
+        ports:
+            - "3030:3000"
+        depends_on: 
+            - message-broker
+        stdin_open: true
+        tty: true
+        volumes:
+            - .:/app
+        networks:
+            - amqp-lib-network
+        command: ["sh", "-c", "cd /app && yarn install && yarn test-ci"]
+
+    message-broker:
+        image: rabbitmq:3.8.2-management
+        volumes:
+          - ./.data-message-broker/data:/var/lib/rabbitmq
+        environment:
+          - RABBITMQ_DEFAULT_USER=test
+          - RABBITMQ_DEFAULT_PASS=test
+          - RABBITMQ_DEFAULT_VHOST=/
+        networks:
+          - amqp-lib-network
+        ports:
+          - 15672:15672
+          - 5672:5672

@@ -1,0 +1,13 @@
+{
+  "verbose": false,
+  "events": {},
+  "watch": [
+    "src/",
+    "test/",
+    "usecases/"
+  ],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "ts,json"
+}
