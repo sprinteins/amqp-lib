@@ -3,6 +3,11 @@ import { Client } from "./binding";
 import log from "./log";
 import { Queue } from "./queue";
 
+enum MessageType {
+    EntityMessage = "entity",
+    ActionMessage = "event",
+}
+
 export type ExternalContent = Buffer | string | JSON | {};
 
 export interface Properties {
@@ -16,7 +21,7 @@ export interface Properties {
     expiration?: string;
     messageId?: string;
     timestamp?: number;
-    type?: string;
+    type?: MessageType;
     userId?: string;
     appId?: string;
     clusterId?: string;
