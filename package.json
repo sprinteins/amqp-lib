@@ -16,7 +16,8 @@
         "test-watch": "./scripts/scripts-test-watch.sh",
         "test-ci": "./scripts/scripts-test-ci.sh",
         "test-debug": "./scripts/scripts-test-debug.sh",
-        "debug": "./scripts/scripts-debug.sh"
+        "debug": "./scripts/scripts-debug.sh",
+        "preinstall": "yarn tsc"
     },
     "repository": {
         "type": "git",
