@@ -1,9 +1,9 @@
 {
-    "name": "amqp-lib",
+    "name": "amqp-broker",
     "version": "1.0.0",
     "description": "Wrapper for node.amqp library",
-    "license": "MIT",
-    "main": "test.ts",
+    "license": "UNLICENSED",
+    "main": "src/index.js",
     "scripts": {
         "start": "./scripts/scripts-start.sh",
         "start-debug": "./scripts/scripts-start-debug.sh",
@@ -19,7 +19,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://https://github.com/sprinteins/amqp-lib"
+        "url": "https://github.com/sprinteins/amqp-lib"
     },
     "files": [
         "src/"

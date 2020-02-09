@@ -1,0 +1,22 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "cyclomatic-complexity": [true, 15],
+        "no-return-await": true,
+        "indent": [true, "spaces", 4],
+        "interface-name": [true, "never-prefix"],
+        "no-any": true,
+        "no-switch-case-fall-through": true,
+        "no-unused-expression": false,
+        "array-type": [true, "array"],
+        "no-console": false,
+        "variable-name": [
+            true,
+            "ban-keywords",
+            "check-format",
+            "allow-leading-underscore",
+            "allow-pascal-case"
+        ],
+        "member-ordering": false
+    }
+}
