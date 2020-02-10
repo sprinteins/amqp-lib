@@ -27,7 +27,6 @@ dump
 *.iml
 .DS_Store
 Thumbs.db
-dist/**/*
 
 .data
 .uploads
