@@ -1,7 +1,7 @@
 import * as AmqpLib from "amqplib/callback_api";
 import { EventEmitter } from "events";
 import { Binding, Client } from "./binding";
-import { errors, eventNames } from "./constants";
+import { errors, EventNames } from "./constants";
 import { Exchange, Options as ExchangeOptions } from "./exchange";
 import log from "./log";
 import { Options as QueueOptions, Queue } from "./queue";
@@ -232,7 +232,7 @@ export class Connection extends EventEmitter {
                 this._connection.close((error) => {
                     if (!error) {
                         this.isConnected = false;
-                        this.emit(eventNames.closedConnection);
+                        this.emit(EventNames.closedConnection);
                         resolve();
                     }
                     reject(error);
@@ -308,7 +308,7 @@ export class Connection extends EventEmitter {
         } catch (error) {
             this._rebuilding = false;
             log.warn("Error establishing connection", { module: "amqp" });
-            this.emit(eventNames.errorConnection, error);
+            this.emit(EventNames.errorConnection, error);
         }
     }
 
@@ -325,10 +325,10 @@ export class Connection extends EventEmitter {
         this._rebuilding = false;
         if (this.alreadyOnceConnected) {
               log.warn("Connection re established", { module: "amqp" });
-              this.emit(eventNames.reEstablishedConnection);
+              this.emit(EventNames.reEstablishedConnection);
           } else {
               log.info("Connection established", { module: "amqp" });
-              this.emit(eventNames.openConnection);
+              this.emit(EventNames.openConnection);
               this.alreadyOnceConnected = true;
           }
         resolve();
@@ -362,7 +362,7 @@ export class Connection extends EventEmitter {
                 log.warn(`Retry attempt:  ${retry}`, {
                     module: "amqp",
                 });
-                this.emit(eventNames.retryingConnection);
+                this.emit(EventNames.retryingConnection);
                 setTimeout(
                     this.initConnection,
                     this.reconnectStrategy.interval,
@@ -392,7 +392,7 @@ export class Connection extends EventEmitter {
         if (this._connection) {
             this._connection.removeListener("close", this.onClose);
             if (!this._isClosing) {
-                this.emit(eventNames.lostConnection);
+                this.emit(EventNames.lostConnection);
                 this.restart(new Error(errors.remoteHostConnectionClosed));
             }
         }

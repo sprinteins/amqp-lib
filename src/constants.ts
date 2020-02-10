@@ -1,6 +1,6 @@
 const namespace = "amqp-lib";
 
-export const eventNames = {
+export const EventNames = {
     closedConnection : `${namespace}.closed-connection`,
     errorConnection: `${namespace}.error-connection`,
     lostConnection: `${namespace}.lost-connection`,
