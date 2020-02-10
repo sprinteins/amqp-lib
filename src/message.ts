@@ -3,7 +3,7 @@ import { Client } from "./binding";
 import log from "./log";
 import { Queue } from "./queue";
 
-enum MessageType {
+export enum MessageType {
     EntityMessage = "entity",
     ActionMessage = "event",
 }
