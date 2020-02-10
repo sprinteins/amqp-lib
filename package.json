@@ -1,6 +1,6 @@
 {
     "name": "amqp-lib",
-    "version": "1.0.17",
+    "version": "1.0.18",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
     "main": "dist/index.js",
@@ -17,7 +17,7 @@
         "test-ci": "./scripts/scripts-test-ci.sh",
         "test-debug": "./scripts/scripts-test-debug.sh",
         "debug": "./scripts/scripts-debug.sh",
-        "postinstall": "./scripts/postinstall.sh"
+        "postinstall": "./scripts/scripts-postinstall.sh"
     },
     "repository": {
         "type": "git",
