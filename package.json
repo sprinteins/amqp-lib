@@ -1,6 +1,6 @@
 {
     "name": "amqp-lib",
-    "version": "1.0.18",
+    "version": "1.0.19",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
     "main": "dist/index.js",
