@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import * as AmqpLib from "amqplib/callback_api";
 import { Client } from "./binding";
-declare enum MessageType {
+export declare enum MessageType {
     EntityMessage = "entity",
     ActionMessage = "event"
 }
@@ -50,4 +50,3 @@ export declare class Message {
     private sendMessage;
     private setBufferContent;
 }
-export {};
