@@ -9,12 +9,12 @@ export const EventNames = {
     retryingConnection: `${namespace}.retrying-connection`,
 };
 
-export const errors = {
+export const AmqpLibErrors = {
     channelOrMessageUndefined: "undefined-channel-or-message",
     consumerAlreadyEstablished: "consumer-already-established",
     corruptChannel: "corrupt-channel",
     defineQueueOrExchange: "define-queue-or-exchange",
-    noMessageConsumed: "no-messge-consumed",
+    noMessageConsumed: "no-message-consumed",
     remoteHostConnectionClosed: "remote-host-closed-connection",
     requiredConsumerFunction: "required-consumer-function",
-}
+};

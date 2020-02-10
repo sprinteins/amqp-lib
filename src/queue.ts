@@ -1,10 +1,10 @@
-import * as AmqpLib from "amqplib/callback_api";
+import * as AmqpLib from "amqplib";
 import { Binding } from "./binding";
 import { Connection } from "./connection";
+import { AmqpLibErrors } from "./constants";
 import { Exchange } from "./exchange";
 import log from "./log";
 import { ExternalContent, Message, MessageProperties } from "./message";
-import { errors } from "./constants";
 
 export interface Options {
   exclusive?: boolean;
@@ -115,7 +115,7 @@ export class Queue {
     await this._promisedQueue;
     try {
       if (!this._channel) {
-        throw new Error(errors.corruptChannel);
+        throw new Error(AmqpLibErrors.corruptChannel);
       }
       this._channel.sendToQueue(this._name, result, newOptions);
     } catch (error) {
@@ -153,7 +153,7 @@ export class Queue {
     options: ConsumerOptions = {},
   ): Promise<void> | undefined {
     if (this._promisedConsumer) {
-      throw new Error(errors.consumerAlreadyEstablished);
+      throw new Error(AmqpLibErrors.consumerAlreadyEstablished);
     }
 
     this._consumerOptions = options;
@@ -172,25 +172,21 @@ export class Queue {
       await this._promisedConsumer;
 
       if (!this._channel) {
-        reject(new Error(errors.corruptChannel));
+        reject(new Error(AmqpLibErrors.corruptChannel));
         return;
       }
 
       if (!this._consumerTag) {
-        reject(new Error(errors.corruptChannel));
+        reject(new Error(AmqpLibErrors.corruptChannel));
         return;
       }
-      this._channel.cancel(this._consumerTag, (error: Error, ok: AmqpLib.Replies.Empty) => {
-        if (error) {
-          reject(error);
-        } else {
-          delete this._promisedConsumer;
-          delete this._consumer;
-          delete this._consumerOptions;
-          delete this._consumerStopping;
-          resolve();
-        }
-      });
+
+      await this._channel.cancel(this._consumerTag);
+      delete this._promisedConsumer;
+      delete this._consumer;
+      delete this._consumerOptions;
+      delete this._consumerStopping;
+      resolve();
     });
   }
 
@@ -201,7 +197,7 @@ export class Queue {
   public async prefetch(count: number): Promise<void> {
     await this._promisedQueue;
     if (!this._channel) {
-      throw new Error(errors.corruptChannel);
+      throw new Error(AmqpLibErrors.corruptChannel);
     }
     this._channel.prefetch(count);
     this._options.prefetch = count;
@@ -211,15 +207,11 @@ export class Queue {
     return new Promise(async (resolve, reject) => {
       await this._promisedQueue;
       if (!this._channel) {
-        throw new Error(errors.corruptChannel);
+        throw new Error(AmqpLibErrors.corruptChannel);
       }
-      this._channel.recover((error: Error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
+
+      return this._channel.recover();
+
     });
   }
 
@@ -259,7 +251,7 @@ export class Queue {
 
   public get channel(): AmqpLib.Channel {
     if (!this._channel) {
-      throw new Error(errors.corruptChannel);
+      throw new Error(AmqpLibErrors.corruptChannel);
     }
     return this._channel;
   }
@@ -285,29 +277,20 @@ export class Queue {
       const internalConnection = this._connection.connection;
 
       if (!internalConnection) {
-        throw new Error(errors.corruptChannel);
+        throw new Error(AmqpLibErrors.corruptChannel);
       }
 
-      internalConnection.createChannel((error: Error, channel: AmqpLib.Channel) => {
-        if (!error) {
-          this._channel = channel;
-
-          if (this._options.noCreate) {
-            this._channel.checkQueue(
-              this._name,
-              this.assertQueue(resolve, reject),
-            );
-          } else {
-            this._channel.assertQueue(
-              this._name,
-              this._options,
-              this.assertQueue(resolve, reject),
-            );
-          }
-          return;
-        }
-        reject(error);
-      });
+      this._channel = await internalConnection.createChannel();
+      let result;
+      if (this._options.noCreate) {
+        result = await this._channel.checkQueue(this._name);
+      } else {
+        result = await this._channel.assertQueue(this._name, this._options);
+      }
+      if (this._options.prefetch && this._channel) {
+        this._channel.prefetch(this._options.prefetch);
+      }
+      resolve(result);
     } catch (error) {
       // error
       log.error(
@@ -316,27 +299,10 @@ export class Queue {
           module: "amqp",
         },
       );
-    }
-  }
+      this._connection.removeQueue(this._name);
+      reject(error);
 
-  private assertQueue(
-    resolve: (value: InitResult) => void,
-    reject: (error: Error) => void,
-  ) {
-    return (error: Error, ok: AmqpLib.Replies.Empty) => {
-      if (error) {
-        log.error(`Failed to assert|check queue ${this._name}.`, {
-          module: "amqp",
-        });
-        this._connection.removeQueue(this._name);
-        reject(error);
-      } else {
-        if (this._options.prefetch && this._channel) {
-          this._channel.prefetch(this._options.prefetch);
-        }
-        resolve(ok as InitResult);
-      }
-    };
+    }
   }
 
   private async delete(
@@ -346,32 +312,28 @@ export class Queue {
     await this._promisedQueue;
     await Binding.RemoveBindings(this);
     if (!this._channel) {
-      reject(new Error(errors.corruptChannel));
+      reject(new Error(AmqpLibErrors.corruptChannel));
       return;
     }
 
     await this.unsubscribeConsumer();
-    this._channel.deleteQueue(this._name, {}, (error: Error, ok: AmqpLib.Replies.DeleteQueue) => {
-      if (error) {
-        reject(error);
-      } else {
-        this.invalidate(resolve, reject, ok);
-      }
-    });
+
+    const ok = await this._channel.deleteQueue(this._name);
+    await this.invalidate(resolve, reject, ok);
   }
 
   private async close(resolve: () => void, reject: (error: Error) => void) {
     await this._promisedQueue;
     await Binding.RemoveBindings(this);
     if (!this._channel) {
-      reject(new Error(errors.corruptChannel));
+      reject(new Error(AmqpLibErrors.corruptChannel));
       return;
     }
     await this.unsubscribeConsumer();
     this.invalidate(resolve, reject);
   }
 
-  private invalidate(
+  private async invalidate(
     resolve: (value?: PurgeResult) => void,
     reject: (error: Error) => void,
     value?: PurgeResult,
@@ -380,18 +342,14 @@ export class Queue {
     this._connection.removeQueue(this._name);
 
     if (!this._channel) {
-      reject(new Error(errors.corruptChannel));
+      reject(new Error(AmqpLibErrors.corruptChannel));
       return;
     }
-    this._channel.close((error: Error) => {
-      if (error) {
-        reject(error);
-      } else {
-        delete this._channel;
-        delete this._connection;
-        resolve(value as PurgeResult);
-      }
-    });
+
+    await this._channel.close();
+    delete this._channel;
+    delete this._connection;
+    resolve(value);
   }
 
   private async connectConsumer(
@@ -401,23 +359,15 @@ export class Queue {
     await this._promisedQueue;
 
     if (!this._channel) {
-      reject(new Error(errors.corruptChannel));
+      reject(new Error(AmqpLibErrors.corruptChannel));
       return;
     }
 
-    this._channel.consume(
+    const ok = await this._channel.consume(
       this._name,
       this.consumerWrapper,
-      this._consumerOptions,
-      (error: Error, ok: AmqpLib.Replies.Consume) => {
-        if (error) {
-          reject(error);
-        } else {
-          this._consumerTag = ok.consumerTag;
-          resolve(ok);
-        }
-      },
-    );
+      this._consumerOptions);
+    resolve(ok);
 
   }
 
@@ -435,11 +385,11 @@ export class Queue {
       result.setChannel(this._channel);
 
       if (!this._consumer) {
-        throw new Error(errors.requiredConsumerFunction);
+        throw new Error(AmqpLibErrors.requiredConsumerFunction);
       }
 
       if (!this._channel) {
-        throw new Error(errors.corruptChannel);
+        throw new Error(AmqpLibErrors.corruptChannel);
       }
       await this._consumer(result);
 
@@ -455,7 +405,7 @@ export class Queue {
   }
 
   // TODO: first attempt improve later
-  private initRpc(
+  private async initRpc(
     resolve: (message: Message) => void,
     reject: (error: Error) => void,
     parmas: ExternalContent,
@@ -463,20 +413,20 @@ export class Queue {
     let consumerTag: string;
 
     if (!this._channel) {
-      reject(new Error(errors.corruptChannel));
+      reject(new Error(AmqpLibErrors.corruptChannel));
       return;
     }
 
-    this._channel.consume(
+    const ok = await this._channel.consume(
       DIRECT_QUEUE,
       (result: AmqpLib.Message | null) => {
         if (!this._channel) {
-          reject(new Error(errors.corruptChannel));
+          reject(new Error(AmqpLibErrors.corruptChannel));
           return;
         }
 
         if (!result) {
-          reject(new Error(errors.noMessageConsumed));
+          reject(new Error(AmqpLibErrors.noMessageConsumed));
           return;
         }
 
@@ -485,18 +435,11 @@ export class Queue {
         answer.setFields(result.fields);
         resolve(answer);
       },
-      { noAck: true },
-      (error: Error, ok: AmqpLib.Replies.Consume) => {
-        if (error) {
-          reject(error);
-        } else {
-          consumerTag = ok.consumerTag;
-          const message = new Message(parmas, {
-            replyTo: DIRECT_QUEUE,
-          });
-          message.send(this);
-        }
-      },
-    );
+      { noAck: true });
+    consumerTag = ok.consumerTag;
+    const message = new Message(parmas, {
+        replyTo: DIRECT_QUEUE,
+      });
+    message.send(this);
   }
 }
