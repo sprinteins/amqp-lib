@@ -1,3 +1,4 @@
+import * as AmqpLib from "amqplib/callback_api";
 import { Exchange } from "./exchange";
 import log from "./log";
 import { Queue } from "./queue";
@@ -109,7 +110,7 @@ export class Binding {
       this._origin.name,
       this._expression,
       this._args,
-      (error, ok) => {
+      (error: Error, ok: AmqpLib.Replies.Empty) => {
         if (error) {
           log.error(
             `Failed to create queue binding (${this._origin.name} -> ${queue.name})`,
@@ -137,7 +138,7 @@ export class Binding {
       this._origin.name,
       this._expression,
       this._args,
-      (error: Error, ok: any) => {
+      (error: Error, ok: AmqpLib.Replies.Empty) => {
         if (error) {
           log.error(
             `Failed to unbind queue binding (${this._origin.name} -> ${queue.name})`,
@@ -167,7 +168,7 @@ export class Binding {
       this._origin.name,
       this._expression,
       this._args,
-      (error: Error, ok: any) => {
+      (error: Error, ok: AmqpLib.Replies.Empty) => {
         if (error) {
           log.error(
             `Failed to create exchange binding (${this._origin.name} -> ${exchange.name})`,
@@ -196,7 +197,7 @@ export class Binding {
       this._origin.name,
       this._expression,
       this._args,
-      (error: Error, ok: any) => {
+      (error: Error, ok: AmqpLib.Replies.Empty) => {
         if (error) {
           log.error(
             `Failed to unbind exchange binding (${this._origin.name} -> ${exchange.name})`,

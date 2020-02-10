@@ -1,6 +1,7 @@
 import * as AmqpLib from "amqplib/callback_api";
 import { Binding } from "./binding";
 import { Connection } from "./connection";
+import { errors } from "./constants";
 import log from "./log";
 import { ExternalContent, Message, MessageProperties } from "./message";
 import { Queue } from "./queue";
@@ -62,7 +63,7 @@ export class Exchange {
     await this._promisedExchange;
     try {
       if (!this._channel) {
-        throw new Error("Corrupt Channel");
+        throw new Error(errors.corruptChannel);
         return;
       }
       this._channel.publish(this._name, routingKey, result, newOptions);
@@ -125,7 +126,7 @@ export class Exchange {
 
   public get channel(): AmqpLib.Channel {
     if (!this._channel) {
-      throw new Error("Corrupt Channel");
+      throw new Error(errors.corruptChannel);
     }
     return this._channel;
   }
@@ -211,7 +212,7 @@ export class Exchange {
     await this._promisedExchange;
     await Binding.RemoveBindings(this);
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
 
@@ -232,7 +233,7 @@ export class Exchange {
 
   private invalidate(resolve: () => void, reject: (error: Error) => void) {
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
 

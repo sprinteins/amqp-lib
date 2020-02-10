@@ -1,5 +1,6 @@
 import * as AmqpLib from "amqplib/callback_api";
 import { Client } from "./binding";
+import { errors } from "./constants";
 import log from "./log";
 import { Queue } from "./queue";
 
@@ -75,7 +76,7 @@ export class Message {
         if (this._channel && this._message) {
             this._channel.ack(this._message, all);
         } else {
-            throw new Error("Channel or message undefined");
+            throw new Error(errors.channelOrMessageUndefined);
         }
     }
 
@@ -83,7 +84,7 @@ export class Message {
         if (this._channel && this._message) {
             this._channel.reject(this._message, requeue);
         } else {
-            throw new Error("Channel or message undefined");
+            throw new Error(errors.channelOrMessageUndefined);
         }
     }
 
@@ -91,7 +92,7 @@ export class Message {
         if (this._channel && this._message) {
             this._channel.nack(this._message, all, requeue);
         } else {
-            throw new Error("Channel or message undefined");
+            throw new Error(errors.channelOrMessageUndefined);
         }
     }
 

@@ -4,6 +4,7 @@ import { Connection } from "./connection";
 import { Exchange } from "./exchange";
 import log from "./log";
 import { ExternalContent, Message, MessageProperties } from "./message";
+import { errors } from "./constants";
 
 export interface Options {
   exclusive?: boolean;
@@ -114,7 +115,7 @@ export class Queue {
     await this._promisedQueue;
     try {
       if (!this._channel) {
-        throw new Error("Corrupt Channel");
+        throw new Error(errors.corruptChannel);
       }
       this._channel.sendToQueue(this._name, result, newOptions);
     } catch (error) {
@@ -152,7 +153,7 @@ export class Queue {
     options: ConsumerOptions = {},
   ): Promise<void> | undefined {
     if (this._promisedConsumer) {
-      throw new Error("Consumer already established");
+      throw new Error(errors.consumerAlreadyEstablished);
     }
 
     this._consumerOptions = options;
@@ -171,15 +172,15 @@ export class Queue {
       await this._promisedConsumer;
 
       if (!this._channel) {
-        reject(new Error("Corrupt Channel"));
+        reject(new Error(errors.corruptChannel));
         return;
       }
 
       if (!this._consumerTag) {
-        reject(new Error("Corrupt Consumer"));
+        reject(new Error(errors.corruptChannel));
         return;
       }
-      this._channel.cancel(this._consumerTag, (error: Error, ok: any) => {
+      this._channel.cancel(this._consumerTag, (error: Error, ok: AmqpLib.Replies.Empty) => {
         if (error) {
           reject(error);
         } else {
@@ -200,7 +201,7 @@ export class Queue {
   public async prefetch(count: number): Promise<void> {
     await this._promisedQueue;
     if (!this._channel) {
-      throw new Error("Corrupt Channel");
+      throw new Error(errors.corruptChannel);
     }
     this._channel.prefetch(count);
     this._options.prefetch = count;
@@ -210,7 +211,7 @@ export class Queue {
     return new Promise(async (resolve, reject) => {
       await this._promisedQueue;
       if (!this._channel) {
-        throw new Error("Corrupt Channel");
+        throw new Error(errors.corruptChannel);
       }
       this._channel.recover((error: Error) => {
         if (error) {
@@ -258,7 +259,7 @@ export class Queue {
 
   public get channel(): AmqpLib.Channel {
     if (!this._channel) {
-      throw new Error("Corrupt Channel");
+      throw new Error(errors.corruptChannel);
     }
     return this._channel;
   }
@@ -284,7 +285,7 @@ export class Queue {
       const internalConnection = this._connection.connection;
 
       if (!internalConnection) {
-        throw new Error("Corrupt connection");
+        throw new Error(errors.corruptChannel);
       }
 
       internalConnection.createChannel((error: Error, channel: AmqpLib.Channel) => {
@@ -345,12 +346,12 @@ export class Queue {
     await this._promisedQueue;
     await Binding.RemoveBindings(this);
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
 
     await this.unsubscribeConsumer();
-    this._channel.deleteQueue(this._name, {}, (error: Error, ok: any) => {
+    this._channel.deleteQueue(this._name, {}, (error: Error, ok: AmqpLib.Replies.DeleteQueue) => {
       if (error) {
         reject(error);
       } else {
@@ -363,7 +364,7 @@ export class Queue {
     await this._promisedQueue;
     await Binding.RemoveBindings(this);
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
     await this.unsubscribeConsumer();
@@ -379,7 +380,7 @@ export class Queue {
     this._connection.removeQueue(this._name);
 
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
     this._channel.close((error: Error) => {
@@ -400,7 +401,7 @@ export class Queue {
     await this._promisedQueue;
 
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
 
@@ -434,11 +435,11 @@ export class Queue {
       result.setChannel(this._channel);
 
       if (!this._consumer) {
-        throw new Error("Required Consume function");
+        throw new Error(errors.requiredConsumerFunction);
       }
 
       if (!this._channel) {
-        throw new Error("Corrupt Channel");
+        throw new Error(errors.corruptChannel);
       }
       await this._consumer(result);
 
@@ -462,7 +463,7 @@ export class Queue {
     let consumerTag: string;
 
     if (!this._channel) {
-      reject(new Error("Corrupt Channel"));
+      reject(new Error(errors.corruptChannel));
       return;
     }
 
@@ -470,12 +471,12 @@ export class Queue {
       DIRECT_QUEUE,
       (result: AmqpLib.Message | null) => {
         if (!this._channel) {
-          reject(new Error("Corrupt Channel"));
+          reject(new Error(errors.corruptChannel));
           return;
         }
 
         if (!result) {
-          reject(new Error("No message consumed"));
+          reject(new Error(errors.noMessageConsumed));
           return;
         }
 
@@ -485,7 +486,7 @@ export class Queue {
         resolve(answer);
       },
       { noAck: true },
-      (error: Error, ok: any) => {
+      (error: Error, ok: AmqpLib.Replies.Consume) => {
         if (error) {
           reject(error);
         } else {
