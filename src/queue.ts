@@ -177,7 +177,7 @@ export class Queue {
       }
 
       if (!this._consumerTag) {
-        reject(new Error(AmqpLibErrors.corruptChannel));
+        reject(new Error(AmqpLibErrors.corruptConsumer));
         return;
       }
 
@@ -203,16 +203,12 @@ export class Queue {
     this._options.prefetch = count;
   }
 
-  public recover(): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      await this._promisedQueue;
-      if (!this._channel) {
-        throw new Error(AmqpLibErrors.corruptChannel);
-      }
-
-      return this._channel.recover();
-
-    });
+  public async recover(): Promise<AmqpLib.Replies.Empty> {
+    await this._promisedQueue;
+    if (!this._channel) {
+      throw new Error(AmqpLibErrors.corruptChannel);
+    }
+    return this._channel.recover();
   }
 
   public rpc(params: object): Promise<Message> {
@@ -367,6 +363,7 @@ export class Queue {
       this._name,
       this.consumerWrapper,
       this._consumerOptions);
+    this._consumerTag = ok.consumerTag;
     resolve(ok);
 
   }
