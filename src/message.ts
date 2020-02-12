@@ -107,7 +107,7 @@ export class Message {
         }
 
         await target.init();
-        await this.sendMessage(target, key, exchange);
+        return this.sendMessage(target, key, exchange);
     }
 
     public get fields() {

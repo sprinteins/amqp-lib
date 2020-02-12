@@ -13,6 +13,7 @@ export const AmqpLibErrors = {
     channelOrMessageUndefined: "undefined-channel-or-message",
     consumerAlreadyEstablished: "consumer-already-established",
     corruptChannel: "corrupt-channel",
+    corruptConnection: "corrupt-connection",
     corruptConsumer: "corrupt-consumer",
     defineQueueOrExchange: "define-queue-or-exchange",
     noMessageConsumed: "no-message-consumed",
