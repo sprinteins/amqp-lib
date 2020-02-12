@@ -50,8 +50,6 @@ export class Binding {
         this._expression = expression;
         this._args = args;
 
-        this.connectBinding = this.connectBinding.bind(this);
-
         this._target.connection.addBinding(
             Binding.GenerateId(this._origin, this._target, this._expression),
             this,
@@ -60,22 +58,20 @@ export class Binding {
     }
 
     public buildBinding() {
-        this.promisedBinding = new Promise<Binding>(this.connectBinding);
+        this.promisedBinding = this.connectBinding();
     }
 
     public init(): Promise<Binding> | undefined {
         return this.promisedBinding;
     }
 
-    public deleteBinding(): Promise<void> {
-        return new Promise(async (resolve, reject) => {
-            await this._target.init();
-            if (this._target instanceof Queue) {
-                this.deleteQueueAsTarget(resolve, reject);
-            } else {
-                this.deleteExchangeAsTarget(resolve, reject);
-            }
-        });
+    public async deleteBinding(): Promise<void> {
+        await this._target.init();
+        if (this._target instanceof Queue) {
+            await this.deleteQueueAsTarget();
+        } else {
+            await this.deleteExchangeAsTarget();
+        }
     }
 
     public get origin() {
@@ -90,22 +86,15 @@ export class Binding {
      * Private methods
      */
 
-    private async connectBinding(
-        resolve: (binding?: Binding) => void,
-        reject: (error: Error) => void,
-    ) {
+    private async connectBinding(): Promise<Binding> {
         await this._target.init();
         if (this._target instanceof Queue) {
-            this.processQueueAsTarget(resolve, reject);
-        } else {
-            this.processExchangeAsTarget(resolve, reject);
+            return this.processQueueAsTarget();
         }
+        return this.processExchangeAsTarget();
     }
 
-    private async processQueueAsTarget(
-        resolve: (binding?: Binding) => void,
-        reject: (error: Error) => void,
-    ) {
+    private async processQueueAsTarget(): Promise<Binding> {
         const queue = this._target;
         try {
             await queue.channel.bindQueue(
@@ -114,7 +103,7 @@ export class Binding {
                 this._expression,
                 this._args,
             );
-            resolve();
+            return this;
         } catch (error) {
             log.error(
                 `Failed to create queue binding (${this._origin.name} -> ${queue.name})`,
@@ -129,13 +118,10 @@ export class Binding {
                     this._expression,
                 ),
             );
-            reject(error);
+            throw error;
         }
     }
-    private async deleteQueueAsTarget(
-        resolve: () => void,
-        reject: (error: Error) => void,
-    ) {
+    private async deleteQueueAsTarget(): Promise<void> {
         const queue = this._target;
         try {
             await queue.channel.unbindQueue(
@@ -151,7 +137,6 @@ export class Binding {
                     this._expression,
                 ),
             );
-            resolve();
         } catch (error) {
             log.error(
                 `Failed to unbind queue binding (${this._origin.name} -> ${queue.name})`,
@@ -159,14 +144,11 @@ export class Binding {
                     module: "amqp",
                 },
             );
-            reject(error);
+            throw error;
         }
     }
 
-    private async processExchangeAsTarget(
-        resolve: (binding?: Binding) => void,
-        reject: (error: Error) => void,
-    ) {
+    private async processExchangeAsTarget(): Promise<Binding> {
         const exchange = this._target;
         await exchange.init();
         try {
@@ -176,7 +158,7 @@ export class Binding {
                 this._expression,
                 this._args,
             );
-            resolve(this);
+            return this;
         } catch (error) {
             log.error(
                 `Failed to create exchange binding (${this._origin.name} -> ${exchange.name})`,
@@ -191,13 +173,10 @@ export class Binding {
                     this._expression,
                 ),
             );
-            reject(error);
+            throw error;
         }
     }
-    private async deleteExchangeAsTarget(
-        resolve: () => void,
-        reject: (error: Error) => void,
-    ) {
+    private async deleteExchangeAsTarget(): Promise<void> {
         const exchange = this._target;
         await exchange.init();
         try {
@@ -214,7 +193,6 @@ export class Binding {
                     this._expression,
                 ),
             );
-            resolve();
         } catch (error) {
             log.error(
                 `Failed to unbind exchange binding (${this._origin.name} -> ${exchange.name})`,
@@ -222,7 +200,7 @@ export class Binding {
                     module: "amqp",
                 },
             );
-            reject(error);
+            throw error;
         }
     }
 }
