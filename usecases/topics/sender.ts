@@ -11,8 +11,8 @@ export const sender = async () => {
     };
 
     const connection = new Connection(config.messagebrokerurl, {
-        interval: 5000,
-        retries: 5000,
+        interval: 1000,
+        retries: 50,
     });
 
     const exchange = connection.registerExchange("topics_exchange", "topic", {
