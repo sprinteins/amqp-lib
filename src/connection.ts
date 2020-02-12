@@ -5,6 +5,7 @@ import { AmqpLibErrors, EventNames } from "./constants";
 import { Exchange, Options as ExchangeOptions } from "./exchange";
 import log from "./log";
 import { Options as QueueOptions, Queue } from "./queue";
+import { aBit } from "./utils";
 
 export interface ReconnectStrategy {
     retries: number;
@@ -71,10 +72,6 @@ export class Connection extends EventEmitter {
         this._exchanges = {};
         this._queues = {};
         this._bindings = {};
-
-        this.tryToConnect = this.tryToConnect.bind(this);
-        this.initConnection = this.initConnection.bind(this);
-
         this.buildConnection();
     }
 
@@ -110,18 +107,16 @@ export class Connection extends EventEmitter {
 
         log.debug(`Trying to initialize topology`, { module: "amqp" });
 
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.initializeTopology();
-                log.debug(`Rebuild Successful`, { module: "amqp" });
-                resolve();
-            } catch (error) {
-                log.debug(`Rebuild Failed: ${error.message}`, {
-                    module: "amqp",
-                });
-                reject(error);
-            }
-        });
+        try {
+            await this.initializeTopology();
+            log.debug(`Rebuild Successful`, { module: "amqp" });
+        } catch (error) {
+            log.debug(`Rebuild Failed: ${error.message}`, {
+                module: "amqp",
+            });
+            throw error;
+        }
+
     }
     public initializeTopology(): Promise<unknown> {
         const allTopologies: (Promise<unknown> | undefined)[] = [];
@@ -225,19 +220,16 @@ export class Connection extends EventEmitter {
 
     public async close(): Promise<void> {
         this._isClosing = true;
-        return new Promise(async (resolve, reject) => {
-            await this._promisedConnection;
-            if (this._connection) {
-                try {
-                    await this._connection.close();
-                    this.isConnected = false;
-                    this.emit(EventNames.closedConnection);
-                    resolve();
-                } catch (error) {
-                    reject(error);
-                }
+        await this._promisedConnection;
+        if (this._connection) {
+            try {
+                await this._connection.close();
+                this.isConnected = false;
+                this.emit(EventNames.closedConnection);
+            } catch (error) {
+                throw error;
             }
-        });
+        }
     }
 
     public addExchange(exchange: Exchange) {
@@ -303,7 +295,7 @@ export class Connection extends EventEmitter {
             this._rebuilding = true;
             this._isClosing = false;
 
-            this._promisedConnection = new Promise(this.tryToConnect);
+            this._promisedConnection = this.tryToConnect();
         } catch (error) {
             this._rebuilding = false;
             log.warn("Error establishing connection", { module: "amqp" });
@@ -311,46 +303,32 @@ export class Connection extends EventEmitter {
         }
     }
 
-    private async tryToConnect(
-        resolve: () => void,
-        reject: (error: Error) => void,
-    ) {
-        this.initConnection(0, (error) => {
-            if (error) {
-                reject(error);
-            }
+    private async tryToConnect() {
+        await this.initConnection(0);
 
-            this._rebuilding = false;
-            if (this.alreadyOnceConnected) {
-                log.warn("Connection re established", { module: "amqp" });
-                this.emit(EventNames.reEstablishedConnection);
-            } else {
-                log.info("Connection established", { module: "amqp" });
-                this.emit(EventNames.openConnection);
-                this.alreadyOnceConnected = true;
-            }
-            resolve();
-        });
+        this._rebuilding = false;
+        if (this.alreadyOnceConnected) {
+            log.warn("Connection re established", { module: "amqp" });
+            this.emit(EventNames.reEstablishedConnection);
+        } else {
+            log.info("Connection established", { module: "amqp" });
+            this.emit(EventNames.openConnection);
+            this.alreadyOnceConnected = true;
+        }
     }
 
-    private async initConnection(
-        retry: number,
-        callback: (error?: Error) => void,
-    ) {
-        // TODO: convert this callback to a promise
+    private async initConnection(retry: number) {
         try {
             this._connection = await AmqpLib.connect(this.url);
             this.isConnected = true;
             this._connection.on("error", this.restart);
             this._connection.on("error", this.onClose);
             this.alreadyOnceConnected = false;
-            callback();
         } catch (error) {
             // make sure we only retry once
             if (retry <= this._retry) {
                 log.warn("rety issues" + retry, { module: "amqp" });
-                callback(error);
-                return;
+                throw error;
             }
 
             log.warn("Error connection failed", { module: "amqp" });
@@ -365,19 +343,15 @@ export class Connection extends EventEmitter {
                     module: "amqp",
                 });
                 this.emit(EventNames.retryingConnection);
-                setTimeout(
-                    this.initConnection,
-                    this.reconnectStrategy.interval,
-                    retry + 1,
-                    callback,
-                );
+                await aBit(this.reconnectStrategy.interval);
+                await this.initConnection(retry + 1);
             } else {
                 // error no retry strategy
                 log.warn(
                     `Connection failed: all retry attempts exhausted:  ${retry}`,
                     { module: "amqp" },
                 );
-                callback(error);
+                throw error;
             }
         }
     }
