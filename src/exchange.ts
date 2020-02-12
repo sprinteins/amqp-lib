@@ -26,7 +26,7 @@ export class Exchange {
     private _options: Options;
     private _channel?: AmqpLib.Channel;
 
-    private _promisedExchange?: Promise<Result>;
+    private _promisedExchange?: Promise<Result | AmqpLib.Replies.Empty>;
     private _deleting?: Promise<void>;
     private _closing?: Promise<void>;
 
@@ -41,10 +41,6 @@ export class Exchange {
         this._type = type;
         this._options = options;
 
-        this.connectExchange = this.connectExchange.bind(this);
-        this.delete = this.delete.bind(this);
-        this.close = this.close.bind(this);
-
         this.buildExchange();
     }
 
@@ -52,7 +48,7 @@ export class Exchange {
         content: ExternalContent,
         routingKey = "",
         options: MessageProperties,
-    ) {
+    ): Promise<void> {
         const newOptions = { ...options };
 
         const result = Queue.Serialize(content, newOptions);
@@ -75,29 +71,29 @@ export class Exchange {
         }
     }
 
-    public async buildExchange() {
-        this._promisedExchange = new Promise(this.connectExchange);
+    public buildExchange(): void {
+        this._promisedExchange = this.connectExchange();
     }
 
-    public async deleteExchange(): Promise<void> {
+    public deleteExchange(): Promise<void> {
         if (!this._deleting) {
-            this._deleting = new Promise(this.delete);
+            this._deleting = this.delete();
         }
         return this._deleting;
     }
 
-    public async closeExchange(): Promise<void> {
+    public closeExchange(): Promise<void> {
         if (!this._closing) {
-            this._closing = new Promise(this.close);
+            this._closing = this.close();
         }
         return this._closing;
     }
 
-    public send(message: Message, routingKey = "") {
-        message.send(this, routingKey);
+    public async send(message: Message, routingKey = ""): Promise<void> {
+        await message.send(this, routingKey);
     }
 
-    public init(): Promise<Result> | undefined {
+    public init(): Promise<Result | AmqpLib.Replies.Empty> | undefined {
         return this._promisedExchange;
     }
 
@@ -110,7 +106,9 @@ export class Exchange {
         return binding.init();
     }
 
-    public unbind(origin: Exchange, expression = "", args: object = {}) {
+    public unbind(
+        origin: Exchange,
+        expression = ""): Promise<void> {
         return this._connection.bindings[
             Binding.GenerateId(origin, this, expression)
         ].deleteBinding();
@@ -139,10 +137,7 @@ export class Exchange {
      * Private methods
      */
 
-    private async connectExchange(
-        resolve: (value: Result) => void,
-        reject: (error: Error) => void,
-    ) {
+    private async connectExchange(): Promise<Result | AmqpLib.Replies.Empty> {
         try {
             await this._connection.init();
 
@@ -164,7 +159,7 @@ export class Exchange {
                 );
             }
             this._connection.addExchange(this);
-            resolve(result as Result);
+            return result;
         } catch (error) {
             // error
             log.error(
@@ -174,44 +169,34 @@ export class Exchange {
                 },
             );
             this._connection.removeExchange(this.name);
-            reject(error);
+            throw error;
         }
     }
 
-    private async delete(resolve: () => void, reject: (error: Error) => void) {
+    private async delete() {
         await this._promisedExchange;
         await Binding.RemoveBindings(this);
         if (!this._channel) {
-            reject(new Error(AmqpLibErrors.corruptChannel));
-            return;
+            throw new Error(AmqpLibErrors.corruptChannel);
         }
 
         await this._channel.deleteExchange(this._name, {});
-        this.invalidate(resolve, reject);
+        await this.invalidate();
     }
 
-    private async close(resolve: () => void, reject: (error: Error) => void) {
+    private async close() {
         await this._promisedExchange;
         await Binding.RemoveBindings(this);
-        this.invalidate(resolve, reject);
+        await this.invalidate();
     }
 
-    private async invalidate(
-        resolve: () => void,
-        reject: (error: Error) => void,
-    ) {
+    private async invalidate() {
         if (!this._channel) {
-            reject(new Error(AmqpLibErrors.corruptChannel));
-            return;
+            throw new Error(AmqpLibErrors.corruptChannel);
         }
-        try {
-            await this._channel.close();
-            delete this._channel;
-            delete this._connection;
-            resolve();
-        } catch (error) {
-            reject(error);
-        }
+        await this._channel.close();
+        delete this._channel;
+        delete this._connection;
         delete this._promisedExchange; // invalidate promise
     }
 }
