@@ -40,7 +40,6 @@ export const listener = async () => {
 
         setTimeout(async () => {
             // await connection.close();
-            console.log("stufff")
         }, 5000);
     } catch (error) {
         log.error(error);
