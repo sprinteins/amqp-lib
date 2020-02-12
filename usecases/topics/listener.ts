@@ -6,7 +6,10 @@ export const listener = async () => {
     try {
         const key = "anonymous.super.natural";
 
-        const connection = new Connection(config.messagebrokerurl);
+        const connection = new Connection(config.messagebrokerurl, {
+            interval: 1000,
+            retries: 50,
+        });
         const exhcange = connection.registerExchange(
             "topics_exchange",
             "topic",
@@ -34,9 +37,11 @@ export const listener = async () => {
             manualAck: false,
             noAck: false,
         });
+
         setTimeout(async () => {
             // await connection.close();
-        }, 500);
+            console.log("stufff")
+        }, 5000);
     } catch (error) {
         log.error(error);
     }
