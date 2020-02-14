@@ -4,7 +4,16 @@ import config from "../config";
 
 export const worker = async () => {
     try {
-        const connection = new Connection(config.messagebrokerurl);
+        const auth = {
+            password: config.messagebrokerpassword,
+            url: config.messagebrokerurl,
+            username: config.messagebrokerusername,
+        };
+
+        const connection = new Connection(auth, {
+            interval: 1500,
+            retries: 50,
+        });
 
         const queue = connection.registerQueue("task_queue", {
             durable: false,

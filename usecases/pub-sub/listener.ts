@@ -4,7 +4,16 @@ import config from "../config";
 
 export const listener = async () => {
     try {
-        const connection = new Connection(config.messagebrokerurl);
+        const auth = {
+            password: config.messagebrokerpassword,
+            url: config.messagebrokerurl,
+            username: config.messagebrokerusername,
+        };
+
+        const connection = new Connection(auth, {
+            interval: 1500,
+            retries: 50,
+        });
         const exhcange = connection.registerExchange(
             "exchange",
             "fanout",

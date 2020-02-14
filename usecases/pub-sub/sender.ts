@@ -7,10 +7,13 @@ export const sender = async () => {
         message: "This is a publisher",
     };
 
-    const connection = new Connection(config.messagebrokerurl, {
-        interval: 5000,
-        retries: 5000,
-    });
+    const auth = {
+        password: config.messagebrokerpassword,
+        url: config.messagebrokerurl,
+        username: config.messagebrokerusername,
+    };
+
+    const connection = new Connection(auth);
 
     const exchange = connection.registerExchange("exchange", "fanout", {
         durable: false,

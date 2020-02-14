@@ -10,7 +10,6 @@ import { aBit } from "./utils";
 export interface ReconnectStrategy {
     retries?: number;
     interval?: number;
-    infinite?: boolean;
 }
 
 export interface ConnectionOptions {
@@ -64,9 +63,8 @@ export class Connection extends EventEmitter {
     private _promisedConnection?: Promise<void>;
 
     constructor(
-        options: ConnectionOptions = {url: "amqp://localhost"},
+        options: ConnectionOptions = { url: "amqp://localhost" },
         reconnectStrategy: ReconnectStrategy = {
-            infinite: false,
             interval: 1500,
             retries: 0,
         },
@@ -303,16 +301,18 @@ export class Connection extends EventEmitter {
             this.url = newUrl;
          }
      }
+
      private buildReconnectStrategy() {
 
-         if (this.isInfiniteRetiresEnabled()) {
-             log.info(`No Reconnect Strategy provided. \n Infinite retries enabled. Number of retires will be ignored`);
+        if (this.isInfiniteRetiresEnabled()) {
+             log.info(`No Reconnect Strategy provided or Retires set to 0.`);
+             log.info(`Infinite retries enabled.`);
          }
 
      }
 
      private isInfiniteRetiresEnabled() {
-         return this.reconnectStrategy.infinite;
+         return this.reconnectStrategy.retries === 0;
      }
 
      private isInRetryRange(retry: number) {
@@ -322,15 +322,6 @@ export class Connection extends EventEmitter {
            return true;
         }
 
-        return false;
-     }
-
-     private canRetry(retry: number): boolean {
-        if (this.isInfiniteRetiresEnabled()) {
-             return true;
-         } else if (this.isInRetryRange(retry)) {
-            return true;
-        }
         return false;
      }
 
@@ -389,7 +380,7 @@ export class Connection extends EventEmitter {
 
             this._retry = retry;
 
-            if (this.reconnectStrategy.interval && this.canRetry(retry)) {
+            if (this.reconnectStrategy.interval && this.isInRetryRange(retry)) {
                 log.warn(`Retry attempt:  ${retry}`, {
                     module: "amqp",
                 });
