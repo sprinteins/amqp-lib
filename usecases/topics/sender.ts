@@ -10,8 +10,14 @@ export const sender = async () => {
         message: "This is a topics routing",
     };
 
-    const connection = new Connection(config.messagebrokerurl, {
-        interval: 1000,
+    const auth = {
+        password: config.messagebrokerpassword,
+        url: config.messagebrokerurl,
+        username: config.messagebrokerusername,
+    };
+
+    const connection = new Connection(auth, {
+        interval: 1500,
         retries: 50,
     });
 

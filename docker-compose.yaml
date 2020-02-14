@@ -10,7 +10,9 @@ services:
     amqp-lib-dev:
         image: "node:9.11.2-alpine"
         environment:
-            - RABBIT_URL=amqp://test:test@message-broker:5672/
+            - RABBITMQ_URL=amqp://message-broker:5672/
+            - RABBITMQ_DEFAULT_USER=test
+            - RABBITMQ_DEFAULT_PASS=test
         ports:
             - "3030:3000"
         stdin_open: true
@@ -24,7 +26,9 @@ services:
     amqp-lib-run:
         image: "node:9.11.2-alpine"
         environment:
-            - RABBIT_URL=amqp://test:test@message-broker:5672/
+            - RABBITMQ_URL=amqp://message-broker:5672/
+            - RABBITMQ_DEFAULT_USER=test
+            - RABBITMQ_DEFAULT_PASS=test
         ports:
             - "3030:3000"
         depends_on: 
@@ -40,7 +44,9 @@ services:
     amqp-lib-run-profiling:
         image: "node:9.11.2-alpine"
         environment:
-            - RABBIT_URL=amqp://test:test@message-broker:5672/
+            - RABBITMQ_URL=amqp://message-broker:5672/
+            - RABBITMQ_DEFAULT_USER=test
+            - RABBITMQ_DEFAULT_PASS=test
         ports:
             - "3030:3000"
         depends_on: 
@@ -58,7 +64,9 @@ services:
     amqp-lib-data-test:
         image: "node:9.11.2-alpine"
         environment:
-            - RABBIT_URL=amqp://test:test@message-broker:5672/
+            - RABBITMQ_URL=amqp://message-broker:5672/
+            - RABBITMQ_DEFAULT_USER=test
+            - RABBITMQ_DEFAULT_PASS=test
         ports:
             - "3030:3000"
         depends_on: 
@@ -74,7 +82,9 @@ services:
     amqp-lib-test-ci:
         image: "node:9.11.2-alpine"
         environment:
-            - RABBIT_URL=amqp://test:test@message-broker:5672/
+            - RABBITMQ_URL=amqp://message-broker:5672/
+            - RABBITMQ_DEFAULT_USER=test
+            - RABBITMQ_DEFAULT_PASS=test
         ports:
             - "3030:3000"
         depends_on: 

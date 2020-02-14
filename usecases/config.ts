@@ -1,5 +1,5 @@
 export default {
-    messagebrokerurl: process.env.RABBIT_URL
-        ? process.env.RABBIT_URL
-        : "amqp://localhost",
+    messagebrokerpassword: process.env.RABBITMQ_DEFAULT_PASS || "test",
+    messagebrokerurl: process.env.RABBITMQ_URL || "amqp://localhost",
+    messagebrokerusername: process.env.RABBITMQ_DEFAULT_USER || "test",
 };

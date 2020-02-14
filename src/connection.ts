@@ -8,8 +8,14 @@ import { Options as QueueOptions, Queue } from "./queue";
 import { aBit } from "./utils";
 
 export interface ReconnectStrategy {
-    retries: number;
-    interval: number;
+    retries?: number;
+    interval?: number;
+}
+
+export interface ConnectionOptions {
+    url: string;
+    username?: string;
+    password?: string;
 }
 
 export interface Topology {
@@ -57,17 +63,20 @@ export class Connection extends EventEmitter {
     private _promisedConnection?: Promise<void>;
 
     constructor(
-        url = "amqp://localhost",
+        options: ConnectionOptions = { url: "amqp://localhost" },
         reconnectStrategy: ReconnectStrategy = {
-            interval: 2000,
+            interval: 1500,
             retries: 0,
         },
     ) {
         super();
 
         this._retry = -1;
-        this.url = url;
+        this.url = options.url;
+        this.buildUrlWithAuth(options);
+
         this.reconnectStrategy = reconnectStrategy;
+        this.buildReconnectStrategy();
 
         this._exchanges = {};
         this._queues = {};
@@ -280,6 +289,42 @@ export class Connection extends EventEmitter {
      * Private methods
      */
 
+     private buildUrlWithAuth(options: ConnectionOptions) {
+
+         if (!options.url) {
+             throw new Error(AmqpLibErrors.missingUrl);
+         }
+
+         if (options.username && options.password) {
+            const [ initial, end ] = this.url.split("://");
+            const newUrl = `${initial}://${options.username}:${options.password}@${end}`;
+            this.url = newUrl;
+         }
+     }
+
+     private buildReconnectStrategy() {
+
+        if (this.isInfiniteRetiresEnabled()) {
+             log.info(`No Reconnect Strategy provided or Retires set to 0.`);
+             log.info(`Infinite retries enabled.`);
+         }
+
+     }
+
+     private isInfiniteRetiresEnabled() {
+         return this.reconnectStrategy.retries === 0;
+     }
+
+     private isInRetryRange(retry: number) {
+        if (!this.reconnectStrategy.retries ||
+             this.reconnectStrategy.retries === 0 ||
+            this.reconnectStrategy.retries > retry) {
+           return true;
+        }
+
+        return false;
+     }
+
     private buildConnection() {
         try {
             if (this._rebuilding) {
@@ -335,10 +380,7 @@ export class Connection extends EventEmitter {
 
             this._retry = retry;
 
-            if (
-                this.reconnectStrategy.retries === 0 ||
-                this.reconnectStrategy.retries > retry
-            ) {
+            if (this.reconnectStrategy.interval && this.isInRetryRange(retry)) {
                 log.warn(`Retry attempt:  ${retry}`, {
                     module: "amqp",
                 });

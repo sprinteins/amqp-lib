@@ -16,6 +16,7 @@ export const AmqpLibErrors = {
     corruptConnection: "corrupt-connection",
     corruptConsumer: "corrupt-consumer",
     defineQueueOrExchange: "define-queue-or-exchange",
+    missingUrl: "missing-url",
     noMessageConsumed: "no-message-consumed",
     remoteHostConnectionClosed: "remote-host-closed-connection",
     requiredConsumerFunction: "required-consumer-function",

@@ -7,9 +7,15 @@ export const scheduler = async () => {
         message: "remove_data_task",
     };
 
-    const connection = new Connection(config.messagebrokerurl, {
-        interval: 5000,
-        retries: 5000,
+    const auth = {
+        password: config.messagebrokerpassword,
+        url: config.messagebrokerurl,
+        username: config.messagebrokerusername,
+    };
+
+    const connection = new Connection(auth, {
+        interval: 1500,
+        retries: 50,
     });
 
     const queue = connection.registerQueue("task_queue", {

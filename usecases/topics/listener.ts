@@ -6,10 +6,17 @@ export const listener = async () => {
     try {
         const key = "anonymous.super.natural";
 
-        const connection = new Connection(config.messagebrokerurl, {
-            interval: 1000,
+        const auth = {
+            password: config.messagebrokerpassword,
+            url: config.messagebrokerurl,
+            username: config.messagebrokerusername,
+        };
+
+        const connection = new Connection(auth, {
+            interval: 1500,
             retries: 50,
         });
+
         const exhcange = connection.registerExchange(
             "topics_exchange",
             "topic",
