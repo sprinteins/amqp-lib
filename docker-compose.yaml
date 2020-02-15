@@ -19,6 +19,8 @@ services:
         tty: true
         networks:
             - amqp-lib-network
+        depends_on: 
+            - message-broker
         volumes:
             - .:/app
         command: ["sh", "-c", "cd /app && yarn install && yarn test-watch"]
