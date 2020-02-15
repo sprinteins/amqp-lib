@@ -1,4 +1,3 @@
-import * as AmqpLib from "amqplib";
 import { expect } from "chai";
 import { Connection, Message } from "../src";
 import config from "./config";
