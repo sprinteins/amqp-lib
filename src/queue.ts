@@ -46,7 +46,7 @@ export interface ConsumerResult {
 export type Consumer = (
   msg: Message,
   channel?: AmqpLib.Channel,
-) => Promise<void> | void;
+) => Promise<void | number> | void;
 
 const DIRECT_QUEUE = "amq.rabbitmq.reply-to";
 
