@@ -79,6 +79,7 @@ export class Queue {
 
   private _deleting?: Promise<PurgeResult>;
   private _closing?: Promise<void>;
+  private _purging?: Promise<AmqpLib.Replies.PurgeQueue>;
 
   private _consumerStopping: boolean = false;
 
@@ -137,6 +138,13 @@ export class Queue {
       this._closing = this.close();
     }
     return this._closing;
+  }
+
+  public purgeQueue(): Promise<AmqpLib.Replies.PurgeQueue> {
+    if (!this._purging) {
+      this._purging = this.purge();
+    }
+    return this._purging;
   }
 
   public subscribeConsumer(
@@ -282,6 +290,12 @@ export class Queue {
     await Binding.RemoveBindings(this);
     await this.unsubscribeConsumer();
     await this.invalidate();
+  }
+
+  private async purge(): Promise<AmqpLib.Replies.PurgeQueue> {
+    await this._promisedQueue;
+    const ok = await this.guardedChannel().purgeQueue(this._name);
+    return ok;
   }
 
   private async invalidate(): Promise<void> {
