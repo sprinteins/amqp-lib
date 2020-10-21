@@ -10,7 +10,7 @@ export interface Options {
   exclusive?: boolean;
   durable?: boolean;
   autoDelete?: boolean;
-  arguments?: { [key: string]: string };
+  arguments?: { [key: string]: string | number | boolean };
   messageTtl?: number;
   expires?: number;
   deadLetterExchange?: string;
