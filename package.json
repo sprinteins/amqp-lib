@@ -1,5 +1,5 @@
 {
-    "name": "amqp-lib",
+    "name": "amqp-lib-ts",
     "version": "1.0.29",
     "description": "Wrapper for node.amqp library",
     "license": "MIT",
@@ -16,8 +16,7 @@
         "test-watch": "./scripts/scripts-test-watch.sh",
         "test-ci": "./scripts/scripts-test-ci.sh",
         "test-debug": "./scripts/scripts-test-debug.sh",
-        "debug": "./scripts/scripts-debug.sh",
-        "postinstall": "./scripts/scripts-postinstall.sh"
+        "debug": "./scripts/scripts-debug.sh"
     },
     "repository": {
         "type": "git",
